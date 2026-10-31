@@ -36,7 +36,12 @@ class Table
         if (count($lines) < 2) {
             throw new LocalizedException(__('The table needs a heading line and at least one row.'));
         }
-        $cells = static fn (string $line) => array_map('trim', explode('|', trim($line, '| ')));
+        // One outer pipe on each side is a border, not a cell; inner empty cells
+        // stay (a blank corner heading: "| | S | M |").
+        $cells = static fn (string $line) => array_map(
+            'trim',
+            explode('|', (string) preg_replace(['/^\|/', '/\|\z/'], '', $line))
+        );
         $columns = $cells(array_shift($lines));
         if (count($columns) < 2 || count($columns) > self::MAX_COLUMNS) {
             throw new LocalizedException(__('The heading line needs 2 to %1 columns separated by "|".', self::MAX_COLUMNS));
@@ -60,9 +65,24 @@ class Table
      */
     public static function format(array $table): string
     {
-        $lines = [implode(' | ', $table['columns'] ?? [])];
+        // An empty first cell gets its outer border back, or parse() would read
+        // the border as that cell and shift the line; so does an empty last
+        // heading (a row's missing last cells are padded anyway).
+        $line = static function (array $cells, bool $heading = false): string {
+            $cells = array_values($cells);
+            $text = implode(' | ', $cells);
+            if ($cells && $cells[0] === '') {
+                $text = '|' . $text;
+            }
+            if ($heading && count($cells) > 1 && end($cells) === '') {
+                $text .= '|';
+            }
+
+            return $text;
+        };
+        $lines = [$line($table['columns'] ?? [], true)];
         foreach ($table['rows'] ?? [] as $row) {
-            $lines[] = implode(' | ', $row);
+            $lines[] = $line($row);
         }
 
         return implode("\n", $lines);

@@ -49,4 +49,32 @@ class TableTest extends TestCase
         $this->expectException(LocalizedException::class);
         Table::parse("Size\nS\nM");
     }
+
+    public function testABlankFirstHeadingCellIsKept(): void
+    {
+        $table = Table::parse("| | S | M | L |\n| XS | 1 | 2 | 3 |");
+
+        $this->assertSame(['', 'S', 'M', 'L'], $table['columns']);
+        $this->assertSame([['XS', '1', '2', '3']], $table['rows']);
+    }
+
+    public function testOuterPipesAreBordersAndInnerEmptyCellsStay(): void
+    {
+        $table = Table::parse("| Size | Chest | Waist |\nS | | 71\n|| 90 | 80 |");
+
+        $this->assertSame(['Size', 'Chest', 'Waist'], $table['columns'], 'one pipe on each side is not a cell');
+        $this->assertSame([['S', '', '71'], ['', '90', '80']], $table['rows']);
+    }
+
+    public function testABlankCornerSurvivesTheAdminFormRoundTrip(): void
+    {
+        // The edit form shows format(); saving it again must give the same table.
+        $table = Table::parse("| | S | M |\n| Chest | 86 | 96 |\n| | 1 | 2 |");
+
+        $this->assertSame($table, Table::parse(Table::format($table)));
+        $blankLast = Table::parse("| S | M | |\nA | 1 | 2");
+        $this->assertSame(['S', 'M', ''], $blankLast['columns']);
+        $this->assertSame($blankLast, Table::parse(Table::format($blankLast)));
+        $this->assertSame("Size | Chest (cm)\nS | 86–91", Table::format(Table::parse("Size | Chest (cm)\nS | 86–91")), 'unchanged without a blank first cell');
+    }
 }

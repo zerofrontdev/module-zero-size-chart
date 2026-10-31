@@ -42,9 +42,12 @@ the page and block caches.
 
 Catalog > Size Charts (resource `Zero_SizeChart::charts`): the list and a
 form: name, heading, the table as text (one row per line, cells separated
-by `|`, the first line the headings; 2–12 columns, up to 60 rows), a note
-under the table, categories, sort order, active. The form shows the saved
-table as a preview.
+by `|`, the first line the headings; 2–12 columns, up to 60 rows; one
+outer `|` at the start or end of a line is a border, not a cell, so an
+empty corner cell is written `| | S | M |`, and the form writes that
+border back for a saved empty first cell), a note under the table,
+categories, sort order, active. The form shows the saved table as a
+preview.
 
 `Setup\Patch\Data\AddSizeChartAttribute` adds the `size_chart` product
 attribute (General / Product Details group of every attribute set).
@@ -66,6 +69,8 @@ Stores > Configuration instead, or back up first: `bin/magento setup:upgrade
 --safe-mode=1` dumps the data before anything is dropped (`--data-restore=1`
 puts it back). Deleting the module's code leaves the table in place. The
 `size_chart` product attribute stays either way.
+
+What changed in each release: [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
